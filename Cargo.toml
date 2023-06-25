@@ -1,0 +1,4 @@
+[workspace]
+members = [
+  "sum_two_digits"
+]
