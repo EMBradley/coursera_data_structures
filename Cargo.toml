@@ -1,4 +1,5 @@
 [workspace]
 members = [
-  "sum_two_digits"
+  "sum_two_digits",
+  "maximum_pairwise_product"
 ]
