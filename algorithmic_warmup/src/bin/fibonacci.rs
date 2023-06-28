@@ -1,4 +1,4 @@
-use std::io;
+use std::{ops::Mul, io};
 
 fn main() {
     let mut input = String::new();
@@ -10,14 +10,55 @@ fn main() {
 }
 
 fn fibonacci(n: u64) -> u64 {
-    let mut current = 0;
-    let mut previous = 1;
-    for _ in 0..n {
-        let next = current + previous;
-        previous = current;
-        current = next;
+    let fibonacci_matrix = Matrix {
+        value: [[0, 1], [1, 1]],
+    };
+    let power_matrix = fibonacci_matrix.pow(n);
+    power_matrix.value[0][1]
+}
+
+#[derive(Clone, Copy)]
+struct Matrix {
+    value: [[u64; 2]; 2],
+}
+
+impl Mul for Matrix {
+    type Output = Self;
+    fn mul(self, rhs: Self) -> Self {
+        let a = self.value;
+        let b = rhs.value;
+        let c00 = a[0][0] * b[0][0] + a[0][1] * b[1][0];
+        let c01 = a[0][0] * b[0][1] + a[0][1] * b[1][1];
+        let c10 = a[1][0] * b[0][0] + a[1][1] * b[1][0];
+        let c11 = a[1][0] * b[0][1] + a[1][1] * b[1][1];
+        Self {
+            value: [[c00, c01], [c10, c11]],
+        }
     }
-    current
+}
+
+impl Matrix {
+    fn identity() -> Self {
+        Self {
+            value: [[1, 0], [0, 1]],
+        }
+    }
+    fn pow(self, n: u64) -> Self {
+        let mut n = n;
+        let mut x = self;
+        let mut y = Self::identity();
+        if n == 0 {
+            return y;
+        }
+        while n > 1 {
+            if n % 2 == 1 {
+                y = x * y;
+            }
+            x = x * x;
+            n /= 2
+        }
+        x * y
+    }
 }
 
 #[cfg(test)]
