@@ -54,7 +54,7 @@ fn binary_search_duplicates<T: Ord>(list: &[T], query: &T) -> Option<usize> {
 }
 
 #[cfg(test)]
-mod tests {
+mod binary_duplicates_tests {
     use super::binary_search_duplicates;
     use rand::prelude::*;
 
@@ -75,13 +75,13 @@ mod tests {
         assert_eq!(binary_search_duplicates(&list, &query), None);
     }
     #[test]
-    fn single_item_with_query() {
+    fn single_item_is_query() {
         let list = [0];
         let query = 0;
         assert_eq!(binary_search_duplicates(&list, &query), Some(0));
     }
     #[test]
-    fn single_item_without_query() {
+    fn single_item_not_query() {
         let list = [0];
         let query = 1;
         assert_eq!(binary_search_duplicates(&list, &query), None);

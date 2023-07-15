@@ -49,7 +49,7 @@ fn binary_search<T: Ord>(list: &[T], query: &T) -> Option<usize> {
 }
 
 #[cfg(test)]
-mod tests {
+mod binary_search_tests {
     use super::binary_search;
     use rand::prelude::*;
 
