@@ -5,14 +5,17 @@ fn main() {
     let list = read_list();
     let _m = read_number();
     let queries = read_list();
-    let results: Vec<String> = queries
+
+    let results = queries
         .into_iter()
         .map(|q| match binary_search(&list, &q) {
             Some(i) => i.to_string(),
             None => "-1".to_string(),
         })
-        .collect();
-    println!("{}", results.join(" "));
+        .collect::<Vec<_>>()
+        .join(" ");
+
+    println!("{}", results);
 }
 
 fn read_number() -> usize {

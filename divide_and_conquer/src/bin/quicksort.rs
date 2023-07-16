@@ -1,31 +1,29 @@
 use std::io;
 
-fn main() {
-    let n = {
-        let mut input = String::new();
-        io::stdin()
-            .read_line(&mut input)
-            .expect("failed to read input");
-        input.trim().parse().expect("failed to parse input")
-    };
+fn main() -> io::Result<()> {
+    let _n = read_line()?;
 
-    let mut input = String::new();
-    io::stdin()
-        .read_line(&mut input)
-        .expect("failed to read input");
-    let mut nums = input
+    let mut list: Vec<_> = read_line()?
         .split(' ')
-        .map(|s| -> u32 { s.trim().parse().expect("failed to parse input") });
-
-    let mut list = vec![0; n];
-    for i in 0..n {
-        list[i] = nums.next().expect("list shorter than expected");
-    }
+        .map(|s| s.trim().parse::<u32>().expect("failed to parse input"))
+        .collect();
 
     quick_sort(&mut list);
 
-    let list: Vec<String> = list.into_iter().map(|n| n.to_string()).collect();
-    println!("{}", list.join(" "));
+    let answer = list
+        .into_iter()
+        .map(|n| n.to_string())
+        .collect::<Vec<_>>()
+        .join(" ");
+    println!("{}", answer);
+
+    Ok(())
+}
+
+fn read_line() -> io::Result<String> {
+    let mut input = String::new();
+    io::stdin().read_line(&mut input)?;
+    Ok(input)
 }
 
 fn quick_sort<T: Ord>(list: &mut [T]) {

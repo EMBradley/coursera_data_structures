@@ -2,34 +2,31 @@ use std::collections::HashMap;
 use std::hash::Hash;
 use std::io;
 
-fn main() {
-    let n = {
-        let mut input = String::new();
-        io::stdin()
-            .read_line(&mut input)
-            .expect("failed to read input");
-        input.trim().parse().expect("failed to parse input")
-    };
+fn main() -> io::Result<()> {
+    let n = read_line()?.trim().parse().expect("failed to parse input");
 
-    let mut nums = String::new();
-    let nums = {
-        io::stdin()
-            .read_line(&mut nums)
-            .expect("failed to read input");
-        nums.split(' ')
-            .map(|s| -> u32 { s.trim().parse().expect("failed to parse input") })
-    };
+    let nums = read_line()?
+        .split(' ')
+        .map(|s| s.trim().parse::<u32>().expect("failed to parse input"))
+        .collect();
 
     if has_majority_element(nums, n) {
-        println!("1")
+        println!("1");
     } else {
-        println!("0")
+        println!("0");
     }
+
+    Ok(())
 }
 
-fn has_majority_element<T, I>(list: I, length: usize) -> bool
+fn read_line() -> io::Result<String> {
+    let mut input = String::new();
+    io::stdin().read_line(&mut input)?;
+    Ok(input)
+}
+
+fn has_majority_element<T>(list: Vec<T>, length: usize) -> bool
 where
-    I: Iterator<Item = T>,
     T: Hash + Eq,
 {
     let mut counts = HashMap::new();
@@ -49,13 +46,13 @@ mod majority_tests {
     #[test]
     fn example_1() {
         let n = 5;
-        let nums = [2, 3, 9, 2, 2];
-        assert!(has_majority_element(nums.iter(), n));
+        let nums = vec![2, 3, 9, 2, 2];
+        assert!(has_majority_element(nums, n));
     }
     #[test]
     fn example_2() {
         let n = 4;
-        let nums = [1, 2, 3, 1];
-        assert!(!has_majority_element(nums.iter(), n));
+        let nums = vec![1, 2, 3, 1];
+        assert!(!has_majority_element(nums, n));
     }
 }

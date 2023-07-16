@@ -1,28 +1,21 @@
 use std::{collections::VecDeque, io};
 
-fn main() {
-    let n = {
-        let mut input = String::new();
-        io::stdin()
-            .read_line(&mut input)
-            .expect("failed to read input");
-        input.trim().parse().expect("failed to parse input")
-    };
+fn main() -> io::Result<()> {
+    let _n = read_line()?;
 
-    let mut input = String::new();
-    io::stdin()
-        .read_line(&mut input)
-        .expect("failed to read input");
-    let mut nums = input
+    let list: Vec<_> = read_line()?
         .split(' ')
-        .map(|s| -> u32 { s.trim().parse().expect("failed to parse input") });
-
-    let mut list = vec![0; n];
-    for i in 0..n {
-        list[i] = nums.next().expect("list shorter than expected");
-    }
+        .map(|s| s.trim().parse::<usize>().expect("failed to parse input"))
+        .collect();
 
     println!("{}", count_inversions(&list));
+    Ok(())
+}
+
+fn read_line() -> io::Result<String> {
+    let mut input = String::new();
+    io::stdin().read_line(&mut input)?;
+    Ok(input)
 }
 
 fn count_inversions<T: Ord + Clone>(list: &[T]) -> usize {

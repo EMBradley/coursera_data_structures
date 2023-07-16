@@ -1,64 +1,53 @@
 use std::{io, ops::RangeInclusive};
 
-fn main() {
-    let (n, _m) = {
-        let mut input = String::new();
-        io::stdin()
-            .read_line(&mut input)
-            .expect("failed to read input");
+type Segment<T> = RangeInclusive<T>;
 
-        let mut nums = input
-            .split(' ')
-            .map(|s| -> usize { s.trim().parse().expect("failed to parse input") });
-        (
-            nums.nth(0).expect("invalid input"),
-            nums.nth(1).expect("invalid input"),
-        )
-    };
+fn main() -> io::Result<()> {
+    let n = read_line()?
+        .split(' ')
+        .next()
+        .expect("incomplete input")
+        .trim()
+        .parse()
+        .expect("failed to parse input");
 
     let segments = {
         let mut list = Vec::with_capacity(n);
         for _ in 0..n {
-            let mut input = String::new();
-            io::stdin()
-                .read_line(&mut input)
-                .expect("failed to read input");
-
-            let mut nums = input
+            let nums: Vec<_> = read_line()?
                 .split(' ')
-                .map(|s| -> isize { s.trim().parse().expect("failed to parse input") });
-            let (l, r) = (
-                nums.nth(0).expect("invalid input"),
-                nums.nth(1).expect("invalid input"),
-            );
+                .map(|s| s.trim().parse::<isize>().expect("failed to parse input"))
+                .collect();
+
+            let (l, r) = (nums[0], nums[1]);
             list.push(l..=r);
         }
         list
     };
 
-    let points: Vec<isize> = {
-        let mut input = String::new();
-        io::stdin()
-            .read_line(&mut input)
-            .expect("failed to read input");
+    let points = read_line()?
+        .split(' ')
+        .map(|s| s.parse().expect("failed to parse input"))
+        .collect();
 
-        input
-            .split(' ')
-            .map(|s| s.parse().expect("failed to parse input"))
-            .collect()
-    };
+    let answer = points_and_segments(points, segments)
+        .into_iter()
+        .map(|k| k.to_string())
+        .collect::<Vec<_>>()
+        .join(" ");
 
-    let answers: Vec<String> = {
-        points_and_segments(points, segments)
-            .into_iter()
-            .map(|k| k.to_string())
-            .collect()
-    };
+    println!("{}", answer);
 
-    println!("{}", answers.join(" "));
+    Ok(())
 }
 
-fn points_and_segments<T: Ord>(points: Vec<T>, segments: Vec<RangeInclusive<T>>) -> Vec<usize> {
+fn read_line() -> io::Result<String> {
+    let mut input = String::new();
+    io::stdin().read_line(&mut input)?;
+    Ok(input)
+}
+
+fn points_and_segments<T: Ord>(points: Vec<T>, segments: Vec<Segment<T>>) -> Vec<usize> {
     let (mut left_ends, mut right_ends): (Vec<_>, Vec<_>) =
         segments.into_iter().map(|s| s.into_inner()).unzip();
 
@@ -83,7 +72,7 @@ mod lottery_tests {
     use super::*;
     use rand::prelude::*;
 
-    fn naive_solution<T: Ord>(points: &[T], segments: &[RangeInclusive<T>]) -> Vec<usize> {
+    fn naive_solution<T: Ord>(points: &[T], segments: &[Segment<T>]) -> Vec<usize> {
         points
             .iter()
             .map(|p| segments.iter().filter(|s| s.contains(p)).count())
