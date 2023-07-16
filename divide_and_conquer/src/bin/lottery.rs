@@ -27,7 +27,7 @@ fn main() -> io::Result<()> {
 
     let points = read_line()?
         .split(' ')
-        .map(|s| s.parse().expect("failed to parse input"))
+        .map(|s| s.trim().parse().expect("failed to parse input"))
         .collect();
 
     let answer = points_and_segments(points, segments)
@@ -55,8 +55,8 @@ fn points_and_segments<T: Ord>(points: Vec<T>, segments: Vec<Segment<T>>) -> Vec
     right_ends.sort_unstable();
 
     let count_segments_containing_point = |p| {
-        let start_early_enough = left_ends.partition_point(|l| *l <= p);
-        let end_too_soon = right_ends.partition_point(|r| *r < p);
+        let start_early_enough = partition_point(&left_ends, |l| *l <= p);
+        let end_too_soon = partition_point(&right_ends, |r| *r < p);
 
         start_early_enough - end_too_soon
     };
@@ -65,6 +65,24 @@ fn points_and_segments<T: Ord>(points: Vec<T>, segments: Vec<Segment<T>>) -> Vec
         .into_iter()
         .map(count_segments_containing_point)
         .collect()
+}
+
+fn partition_point<T, F>(list: &[T], f: F) -> usize
+where
+    T: Ord,
+    F: Fn(&T) -> bool,
+{
+    let mut left = 0;
+    let mut right = list.len();
+    while left < right {
+        let m = left + (right - left) / 2;
+        if f(&list[m]) {
+            left = m + 1;
+        } else {
+            right = m;
+        }
+    }
+    right
 }
 
 #[cfg(test)]

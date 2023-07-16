@@ -24,6 +24,7 @@ fn main() -> io::Result<()> {
         points.push(p)
     }
 
+    points.sort_unstable_by_key(|p| p.x);
     let min_distance_between_points = Point::closest_points(&mut points);
     println!("{:.4}", min_distance_between_points);
     Ok(())
@@ -91,7 +92,7 @@ impl Add for Real {
 impl fmt::Display for Real {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let Self(x) = self;
-        write!(f, "{x}")
+        write!(f, "{}", x)
     }
 }
 
@@ -186,7 +187,26 @@ impl Point {
 
 #[cfg(test)]
 mod points_tests {
+    use rand::prelude::*;
+    use std::array;
+
     use super::*;
+
+    fn naive_solution(points: &[Point]) -> Real {
+        points
+            .iter()
+            .enumerate()
+            .filter_map(|(i, p)| {
+                points
+                    .iter()
+                    .skip(i + 1)
+                    .copied()
+                    .map(|q| p.distance(q))
+                    .min()
+            })
+            .min()
+            .unwrap()
+    }
 
     #[test]
     fn example_1() {
@@ -212,5 +232,23 @@ mod points_tests {
         points.sort_unstable_by_key(|p| p.x);
         let Real(d) = Point::closest_points(&mut points);
         assert!((d - 1.414213).abs() <= 0.001)
+    }
+    #[test]
+    fn stress_test() {
+        let mut rng = thread_rng();
+
+        for _ in 0..512 {
+            let mut points: [Point; 128] = array::from_fn(|_| {
+                let x: f64 = rng.gen();
+                let y: f64 = rng.gen();
+                Point::new(x, y)
+            });
+
+            points.sort_unstable_by_key(|p| p.x);
+            let Real(naive_answer) = naive_solution(&points);
+            let Real(smart_answer) = Point::closest_points(&points);
+
+            assert!((naive_answer - smart_answer).abs() <= 0.001);
+        }
     }
 }
