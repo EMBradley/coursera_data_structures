@@ -36,7 +36,7 @@ fn main() -> io::Result<()> {
         .collect::<Vec<_>>()
         .join(" ");
 
-    println!("{}", answer);
+    println!("{answer}");
 
     Ok(())
 }
@@ -49,7 +49,7 @@ fn read_line() -> io::Result<String> {
 
 fn points_and_segments<T: Ord>(points: Vec<T>, segments: Vec<Segment<T>>) -> Vec<usize> {
     let (mut left_ends, mut right_ends): (Vec<_>, Vec<_>) =
-        segments.into_iter().map(|s| s.into_inner()).unzip();
+        segments.into_iter().map(Segment::into_inner).unzip();
 
     left_ends.sort_unstable();
     right_ends.sort_unstable();

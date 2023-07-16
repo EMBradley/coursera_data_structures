@@ -15,7 +15,7 @@ fn main() {
         .collect::<Vec<_>>()
         .join(" ");
 
-    println!("{}", results);
+    println!("{results}");
 }
 
 fn read_number() -> usize {

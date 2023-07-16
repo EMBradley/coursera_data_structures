@@ -15,7 +15,7 @@ fn main() -> io::Result<()> {
         .map(|n| n.to_string())
         .collect::<Vec<_>>()
         .join(" ");
-    println!("{}", answer);
+    println!("{answer}");
 
     Ok(())
 }
@@ -27,11 +27,6 @@ fn read_line() -> io::Result<String> {
 }
 
 fn quick_sort<T: Ord>(list: &mut [T]) {
-    if list.is_empty() {
-        return;
-    }
-    quick_sort_impl(list, 0, list.len() - 1);
-
     fn quick_sort_impl<T: Ord>(list: &mut [T], mut left: usize, mut right: usize) {
         while left < right {
             let p = partition(list, left, right);
@@ -64,6 +59,11 @@ fn quick_sort<T: Ord>(list: &mut [T]) {
             right -= 1;
         }
     }
+
+    if list.is_empty() {
+        return;
+    }
+    quick_sort_impl(list, 0, list.len() - 1);
 }
 
 #[cfg(test)]

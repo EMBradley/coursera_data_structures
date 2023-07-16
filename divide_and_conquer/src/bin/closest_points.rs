@@ -12,21 +12,20 @@ fn main() -> io::Result<()> {
         stdin.read_line(&mut buffer)?;
         buffer.trim().parse().expect("failed to read n")
     };
-    let mut points = Vec::with_capacity(n);
-    for _ in 0..n {
-        buffer.clear();
-        stdin.read_line(&mut buffer)?;
-        let coordinates: Vec<f64> = buffer
-            .split(' ')
-            .map(|s| s.trim().parse().expect("failed to parse input"))
-            .collect();
-        let p = Point::from(coordinates);
-        points.push(p)
-    }
+    let mut points: Vec<_> = (0..n)
+        .map(|_| {
+            buffer.clear();
+            stdin.read_line(&mut buffer).expect("failed to read point");
+            let coordinates: Vec<f64> = buffer
+                .split(' ')
+                .map(|s| s.trim().parse().expect("failed to parse point"))
+                .collect();
+            Point::from(&coordinates)
+        })
+        .collect();
 
-    points.sort_unstable_by_key(|p| p.x);
-    let min_distance_between_points = Point::closest_points(&mut points);
-    println!("{:.4}", min_distance_between_points);
+    let d = Point::closest_points(&mut points);
+    println!("{d:.4}");
     Ok(())
 }
 
@@ -34,11 +33,8 @@ fn main() -> io::Result<()> {
 struct Real(f64);
 
 impl Real {
-    fn new<T: Copy>(x: T) -> Self
-    where
-        f64: From<T>,
-    {
-        let x = f64::from(x);
+    fn new<T: Copy + Into<f64>>(x: T) -> Self {
+        let x: f64 = x.into();
         assert!(!x.is_nan());
         Self(x)
     }
@@ -92,7 +88,7 @@ impl Add for Real {
 impl fmt::Display for Real {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let Self(x) = self;
-        write!(f, "{}", x)
+        write!(f, "{x}")
     }
 }
 
@@ -105,20 +101,15 @@ struct Point {
 impl Point {
     fn new<T, U>(x: T, y: U) -> Self
     where
-        f64: From<T> + From<U>,
-        T: Copy,
-        U: Copy,
+        T: Copy + Into<f64>,
+        U: Copy + Into<f64>,
     {
         Self {
             x: Real::new(x),
             y: Real::new(y),
         }
     }
-    fn from<T>(coordinates: Vec<T>) -> Self
-    where
-        f64: From<T>,
-        T: Copy,
-    {
+    fn from<T: Copy + Into<f64>>(coordinates: &[T]) -> Self {
         assert!(coordinates.len() == 2);
         let x = coordinates[0];
         let y = coordinates[1];
@@ -129,66 +120,71 @@ impl Point {
         let delta_y = self.y - other.y;
         ((delta_x * delta_x) + (delta_y * delta_y)).sqrt()
     }
-    fn closest_points(points: &[Self]) -> Real {
-        assert!(points.len() >= 2);
-        if points.len() == 2 {
-            let p = points[0];
-            let q = points[1];
-            return p.distance(q);
-        }
-        if points.len() == 3 {
-            return points
+    fn closest_points(points: &mut [Self]) -> Real {
+        fn closest_points_impl(points: &[Point]) -> Real {
+            assert!(points.len() >= 2);
+            if points.len() == 2 {
+                let p = points[0];
+                let q = points[1];
+                return p.distance(q);
+            }
+            if points.len() == 3 {
+                return points
+                    .iter()
+                    .enumerate()
+                    .filter_map(|(i, p)| {
+                        points
+                            .iter()
+                            .skip(i + 1)
+                            .copied()
+                            .map(|q| p.distance(q))
+                            .min()
+                    })
+                    .min()
+                    .unwrap();
+            }
+
+            let (left_side, right_side) = points.split_at(points.len() / 2);
+            let d_left = closest_points_impl(left_side);
+            let d_right = closest_points_impl(right_side);
+            let d_side = min(d_left, d_right);
+
+            let mid_line = points[points.len() / 2].x;
+            let mut middle_strip: Vec<_> = points
+                .iter()
+                .copied()
+                .filter(|p| (p.x - mid_line).abs() <= d_side)
+                .collect();
+            middle_strip.sort_unstable_by_key(|p| p.y);
+            let d_mid = middle_strip
                 .iter()
                 .enumerate()
                 .filter_map(|(i, p)| {
-                    points
+                    middle_strip
                         .iter()
                         .skip(i + 1)
+                        .take(7)
                         .copied()
                         .map(|q| p.distance(q))
                         .min()
                 })
-                .min()
-                .unwrap();
+                .min();
+
+            match d_mid {
+                Some(d_mid) => min(d_side, d_mid),
+                None => d_side,
+            }
         }
 
-        let (left_side, right_side) = points.split_at(points.len() / 2);
-        let d_left = Self::closest_points(left_side);
-        let d_right = Self::closest_points(right_side);
-        let d_side = min(d_left, d_right);
-
-        let mid_line = points[points.len() / 2].x;
-        let mut middle_strip: Vec<_> = points
-            .iter()
-            .copied()
-            .filter(|p| (p.x - mid_line).abs() <= d_side)
-            .collect();
-        middle_strip.sort_unstable_by_key(|p| p.y);
-        let d_mid = middle_strip
-            .iter()
-            .enumerate()
-            .filter_map(|(i, p)| {
-                middle_strip
-                    .iter()
-                    .skip(i + 1)
-                    .take(7)
-                    .copied()
-                    .map(|q| p.distance(q))
-                    .min()
-            })
-            .min();
-
-        match d_mid {
-            Some(d_mid) => min(d_side, d_mid),
-            None => d_side,
-        }
+        points.sort_unstable_by_key(|p| p.x);
+        closest_points_impl(points)
     }
 }
 
 #[cfg(test)]
 mod points_tests {
     use rand::prelude::*;
-    use std::array;
+    use std::{array, f64::consts::SQRT_2};
 
     use super::*;
 
@@ -210,28 +206,27 @@ mod points_tests {
 
     #[test]
     fn example_1() {
-        let mut points = [Point::from(vec![0, 0]), Point::from(vec![3, 4])];
+        let mut points = [Point::from(&[0, 0]), Point::from(&[3, 4])];
         let Real(d) = Point::closest_points(&mut points);
         assert!((d - 5.0).abs() <= 0.001)
     }
     #[test]
     fn example_2() {
         let mut points = [
-            Point::from(vec![4, 4]),
-            Point::from(vec![-2, -2]),
-            Point::from(vec![-3, -4]),
-            Point::from(vec![-1, 3]),
-            Point::from(vec![2, 3]),
-            Point::from(vec![-4, 0]),
-            Point::from(vec![1, 1]),
-            Point::from(vec![-1, -1]),
-            Point::from(vec![3, -1]),
-            Point::from(vec![-4, 2]),
-            Point::from(vec![-2, 4]),
+            Point::from(&[4, 4]),
+            Point::from(&[-2, -2]),
+            Point::from(&[-3, -4]),
+            Point::from(&[-1, 3]),
+            Point::from(&[2, 3]),
+            Point::from(&[-4, 0]),
+            Point::from(&[1, 1]),
+            Point::from(&[-1, -1]),
+            Point::from(&[3, -1]),
+            Point::from(&[-4, 2]),
+            Point::from(&[-2, 4]),
         ];
-        points.sort_unstable_by_key(|p| p.x);
         let Real(d) = Point::closest_points(&mut points);
-        assert!((d - 1.414213).abs() <= 0.001)
+        assert!((d - SQRT_2).abs() <= 0.001)
     }
     #[test]
     fn stress_test() {
@@ -244,9 +239,8 @@ mod points_tests {
                 Point::new(x, y)
             });
 
-            points.sort_unstable_by_key(|p| p.x);
             let Real(naive_answer) = naive_solution(&points);
-            let Real(smart_answer) = Point::closest_points(&points);
+            let Real(smart_answer) = Point::closest_points(&mut points);
 
             assert!((naive_answer - smart_answer).abs() <= 0.001);
         }

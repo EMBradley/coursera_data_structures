@@ -19,28 +19,28 @@ fn main() {
     let queries = read_list();
 
     let results = queries
-        .into_iter()
+        .iter()
         .map(|q| match binary_search_duplicates(&list, q) {
             Some(i) => i.to_string(),
             None => "-1".to_string(),
         })
         .collect::<Vec<_>>()
         .join(" ");
-    println!("{}", results);
+    println!("{results}");
 }
 
-fn binary_search_duplicates<T: Ord>(list: &[T], query: T) -> Option<usize> {
+fn binary_search_duplicates<T: Ord>(list: &[T], query: &T) -> Option<usize> {
     let mut left = 0;
     let mut right = list.len();
     while left < right {
         let m = left + (right - left) / 2;
-        if list[m] < query {
+        if list[m] < *query {
             left = m + 1;
         } else {
             right = m;
         }
     }
-    if *list.get(right)? == query {
+    if list.get(right)? == query {
         Some(right)
     } else {
         None
@@ -56,9 +56,9 @@ mod binary_duplicates_tests {
     fn example_1() {
         let list = [2, 4, 4, 4, 7, 7, 9];
         let queries = [9, 4, 5, 2];
-        for q in queries.into_iter() {
+        for q in queries.iter() {
             let my_answer = binary_search_duplicates(&list, q);
-            let correct_answer = list.iter().position(|x| *x == q);
+            let correct_answer = list.iter().position(|x| x == q);
             assert_eq!(my_answer, correct_answer);
         }
     }
@@ -66,19 +66,19 @@ mod binary_duplicates_tests {
     fn empty_list() {
         let list = [];
         let query = 1;
-        assert_eq!(binary_search_duplicates(&list, query), None);
+        assert_eq!(binary_search_duplicates(&list, &query), None);
     }
     #[test]
     fn single_item_is_query() {
         let list = [0];
         let query = 0;
-        assert_eq!(binary_search_duplicates(&list, query), Some(0));
+        assert_eq!(binary_search_duplicates(&list, &query), Some(0));
     }
     #[test]
     fn single_item_not_query() {
         let list = [0];
         let query = 1;
-        assert_eq!(binary_search_duplicates(&list, query), None);
+        assert_eq!(binary_search_duplicates(&list, &query), None);
     }
     #[test]
     fn stress_test() {
@@ -91,7 +91,7 @@ mod binary_duplicates_tests {
             list.sort_unstable();
             for _ in 0..query_count {
                 let q = rng.gen();
-                let my_answer = binary_search_duplicates(&list, q);
+                let my_answer = binary_search_duplicates(&list, &q);
                 let correct_answer = list.iter().position(|x| *x == q);
                 assert_eq!(my_answer, correct_answer);
             }
